@@ -46,23 +46,19 @@ class HttpHandler(BaseHTTPRequestHandler):
 # Обробка форми виконується функцією do_POST.
     def do_POST(self):
         data = self.rfile.read(int(self.headers['Content-Length']))
-        # print(data)
         data_parse = urllib.parse.unquote_plus(data.decode())
-        # print(data_parse)
         data_dict = {key: value for key, value in [el.split('=') for el in data_parse.split('&')]}
-        print(data_dict)
+        time_message = str(datetime.now())
         self.send_response(302)
         self.send_header('Location', '/')
         self.end_headers()
-        run_client(UDP_IP, UDP_PORT, data_dict)
+        run_client(UDP_IP, UDP_PORT, data_dict, time_message)
 
 
-def run_client(ip, port, data):
+def run_client(ip, port, data, time_message):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server = ip, port
-    values = str((data.values()))
-    print(f"values:{values}")
-    # sock.sendto(keys.encode(), server)
+    values = time_message + "," + ",".join(data.values())
     sock.sendto(values.encode(), server)
     sock.close()
 
@@ -74,10 +70,8 @@ def run_server(ip, port):
     try:
         while True:
             data, address = sock.recvfrom(1024)
-            print(f'Received data: {data.decode()} from: {address}')
-            data_tuple = tuple(data)
-            print(f"data_tuple:{data_tuple}")
-            # save_message(username, message)
+            data = data.decode().split(",")
+            save_message(time=data[0], username=data[1], message=data[2])
     except KeyboardInterrupt:
         print(f'Destroy server')
     finally:
@@ -93,11 +87,11 @@ def run(server_class=HTTPServer, handler_class=HttpHandler):
         http.server_close()
 
 
-def save_message(username, message):
+def save_message(time, username, message):
     try:
         with open(FILE, "r+") as fh:
             data = json.loads(fh.read())
-            data[str(datetime.now())] = {"username": username, 'message': message}
+            data[time] = {"username": username, 'message': message}
             fh.seek(0)
             fh.write(json.dumps(data))
     except FileNotFoundError:
@@ -112,7 +106,3 @@ if __name__ == '__main__':
     socket_server = Thread(target=run_server, args=(UDP_IP, UDP_PORT))
     http_server.start()
     socket_server.start()
-
-    #
-    # run()
-    # echo_server("", 5000)
