@@ -10,6 +10,7 @@ from datetime import datetime
 FILE = "./storage/data.json"
 UDP_IP = '127.0.0.1'
 UDP_PORT = 5000
+HTTPServer_PORT = 3000
 
 class HttpHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -79,7 +80,7 @@ def run_server(ip, port):
 
 
 def run(server_class=HTTPServer, handler_class=HttpHandler):
-    server_address = ('', 3000)
+    server_address = ('', HTTPServer_PORT)
     http = server_class(server_address, handler_class)
     try:
         http.serve_forever()
